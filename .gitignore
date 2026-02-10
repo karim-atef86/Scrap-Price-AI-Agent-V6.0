@@ -1,0 +1,4 @@
+.env
+__pycache__/
+*.csv
+scrap_price_model.json
