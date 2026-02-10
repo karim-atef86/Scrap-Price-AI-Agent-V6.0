@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 from datetime import datetime
 load_dotenv()
 
-# منع التوجه لـ OpenAI افتراضياً
 os.environ["OPENAI_API_KEY"] = "NA"
 
 from crewai import Crew, Process
@@ -23,7 +22,6 @@ task1 = tasks.harvest_data_task(scout, today_date)
 task2 = tasks.technical_prediction_task(analyst)
 task3 = tasks.final_report_task(strategist)
 
-# 2. تكوين الفريق مع لجام RPM لحل مشكلة 429
 scrap_crew = Crew(
     agents=[scout, analyst, strategist],
     tasks=[task1, task2, task3],

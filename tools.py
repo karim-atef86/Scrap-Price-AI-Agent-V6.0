@@ -20,11 +20,9 @@ class InternetSearchTool(BaseTool):
         from datetime import datetime
         tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 
-        # إضافة الشهر والسنة الحالية أوتوماتيكياً لأي بحث
         current_context = datetime.now().strftime('%B %Y')
         enhanced_query = f"{query} {current_context} latest price"
 
-        # طلب البحث مع التأكيد على النتائج الحديثة فقط
         return str(tavily.search(query=enhanced_query, search_depth="advanced"))
 
 
@@ -39,9 +37,7 @@ class PredictScrapPriceTool(BaseTool):
             clean_json = market_data_json.replace("```json", "").replace("```", "").strip()
             data = json.loads(clean_json)
 
-            # وظيفة ذكية لجلب القيم مهما اختلف اسمها أو مكانها (Handling Nested JSON)
             def get_v(primary, aliases):
-                # إذا كانت البيانات متداخلة (Nested) نحاول تبسيطها
                 flat_data = {}
                 for k, v in data.items():
                     if isinstance(v, dict):
@@ -50,22 +46,18 @@ class PredictScrapPriceTool(BaseTool):
                     else:
                         flat_data[k] = v
 
-                # البحث عن القيمة
                 for key in [primary] + aliases:
                     for k in flat_data.keys():
                         if key.lower() in k.lower():
                             return float(flat_data[k])
                 return 0.0
 
-            # استخراج القيم الأساسية
             scrap = get_v('Scrap_Price', ['Today', 'now', 'CFR'])
             iron = get_v('Iron_Ore_Price', ['Iron', '62%'])
 
-            # صمام أمان: لو السعر غير منطقي نطلب من الأيجنت إعادة المحاولة
             if scrap < 300 or scrap > 450:
                 return f"ERROR: The scrap price found (${scrap}) seems incorrect for Feb 2026. Please find the REAL CFR Turkey price (usually $370-$385) and retry."
 
-            # بناء قاموس المدخلات للموديل
             input_dict = {
                 'Scrap_Price': scrap,
                 'Iron_Ore_Price': iron,
@@ -80,11 +72,9 @@ class PredictScrapPriceTool(BaseTool):
                 'DayOfWeek': datetime.now().weekday()
             }
 
-            # معالجة المتوسط إذا كان صفراً
             if input_dict['Scrap_MA_7'] == 0:
                 input_dict['Scrap_MA_7'] = scrap
 
-            # تشغيل الموديل
             bst = xgb.Booster()
             bst.load_model('scrap_price_model.json')
 
@@ -100,7 +90,7 @@ class PredictScrapPriceTool(BaseTool):
             return f"Error processing data: {str(e)}. Please provide data in a flat JSON format."
 
 
-# --- 3. أداة إرسال الإيميل الاحترافية ---
+# --- 3. أداة إرسال الإيميل  ---
 class SendEmailTool(BaseTool):
     name: str = "send_email_tool"
     description: str = "Sends the final Arabic report to management via email."
@@ -116,12 +106,10 @@ class SendEmailTool(BaseTool):
         receiver = os.getenv("EMAIL_RECEIVER")
         password = os.getenv("EMAIL_PASSWORD")
 
-        # وظيفة مساعدة لاستخراج الأرقام من نص التقرير الذي كتبه الأيجنت
         def extract_val(pattern, text):
             match = re.search(pattern, text)
             return match.group(1).strip() if match else "N/A"
 
-        # استخراج البيانات لملء مربعات الـ Dashboard
         scrap_now = extract_val(r"السعر الحالي:\s*(.*?)(?:\n|$)", report_content)
         prediction = extract_val(r"التوقع الرقمي:\s*(.*?)(?:\n|$)", report_content)
         status = extract_val(r"الاتجاه:\s*(.*?)(?:\n|$)", report_content)
@@ -131,7 +119,6 @@ class SendEmailTool(BaseTool):
         try_rate = extract_val(r"الليرة:\s*(.*?)(?:\n|$)", report_content)
         recommendation = extract_val(r"التوصية:\s*(.*?)(?:\n|$)", report_content)
 
-        # تحديد الألوان بناءً على الاتجاه (أحمر للهبوط، أخضر للصعود)
         theme_color = "#e74c3c" if "أقل" in status or "هبوط" in status else "#27ae60"
 
         msg = MIMEMultipart()
@@ -140,7 +127,6 @@ class SendEmailTool(BaseTool):
         msg['Subject'] = Header(f"📊 تقرير أسعار الخردة الاستراتيجي - {datetime.now().strftime('%d/%m/%Y')}",
                                 'utf-8').encode()
 
-        # القالب المتطابق مع الصورة
         html_template = f"""
         <html>
           <body dir="rtl" style="font-family: 'Tahoma', 'Arial', sans-serif; background-color: #f9f9f9; padding: 20px; margin: 0;">
