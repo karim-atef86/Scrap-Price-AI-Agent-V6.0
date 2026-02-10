@@ -1,4 +1,15 @@
+# الأسرار
 .env
-__pycache__/
+
+# بيانات الشركة (ممنوع تترفع)
 *.csv
+master_scrap_data.csv
+
+# الموديل نفسه (اختياري، لكن الأفضل عدم رفعه)
 scrap_price_model.json
+
+# ملفات النظام والبرامج
+.idea/
+__pycache__/
+*.py[cod]
+venv/
